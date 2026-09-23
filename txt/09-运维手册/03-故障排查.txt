@@ -1,0 +1,338 @@
+# 故障排查
+
+## 部署故障
+
+### 部署失败
+
+**症状**：GitHub Actions 或 Vercel 构建失败
+
+**排查步骤**：
+
+```bash
+# 1. 本地测试同步脚本
+python scripts/sync.py
+
+# 2. 检查 python-docx 是否安装
+pip list | grep python-docx
+
+# 3. 检查 Python 版本
+python --version
+
+# 4. 检查配置文件
+cat reader/config.json
+```
+
+**常见原因**：
+
+| 原因 | 解决方案 |
+|------|----------|
+| python-docx 未安装 | `pip install python-docx` |
+| Python 版本过低 | 升级到 3.8+ |
+| 配置文件格式错误 | 验证 JSON 语法 |
+| 文档编码问题 | 转换为 UTF-8 |
+
+### 页面空白
+
+**症状**：访问页面显示空白
+
+**排查步骤**：
+
+```bash
+# 1. 检查 index.html 是否存在
+ls -la reader/index.html
+
+# 2. 检查控制台错误
+# 浏览器 F12 查看 Console
+
+# 3. 检查 index.json 是否正确生成
+cat reader/index.json
+```
+
+**解决方案**：
+
+1. 清除浏览器缓存：Ctrl + F5
+2. 重新同步文档：`python scripts/sync.py`
+3. 检查浏览器控制台错误
+
+### 资源加载失败
+
+**症状**：CSS/JS 文件 404
+
+**排查步骤**：
+
+```bash
+# 1. 检查文件是否存在
+ls -la reader/css/style.css
+ls -la reader/app.js
+
+# 2. 检查文件权限
+ls -la reader/
+
+# 3. 验证路径配置
+cat vercel.json
+```
+
+**解决方案**：
+
+1. 确认 `vercel.json` 配置正确
+2. 检查输出目录是否正确
+3. 清理 Vercel 缓存
+
+## 功能故障
+
+### 侧边栏不显示
+
+**症状**：侧边栏区域空白或显示"加载中..."
+
+**排查步骤**：
+
+```javascript
+// 浏览器控制台检查
+console.log('[Sidebar] items:', items);
+console.log('[Sidebar] length:', sidebarList.children.length);
+```
+
+**原因**：
+
+| 原因 | 解决方案 |
+|------|----------|
+| index.json 未生成 | 运行 `python scripts/sync.py` |
+| JSON 格式错误 | 验证 JSON 语法 |
+| 文档目录为空 | 添加文档到 txt/ 目录 |
+
+### 搜索功能失效
+
+**症状**：搜索无结果或报错
+
+**排查步骤**：
+
+```javascript
+// 检查配置
+console.log('[Config] enable_search:', config.enable_search);
+
+// 检查数据
+console.log('[Search] allDocs:', allDocs);
+```
+
+**解决方案**：
+
+1. 确认 `enable_search: true`
+2. 检查文档是否已加载
+3. 查看控制台错误信息
+
+### 主题切换无效
+
+**症状**：点击主题按钮无反应
+
+**排查步骤**：
+
+```javascript
+// 检查按钮事件
+console.log('[Theme] toggle clicked');
+
+// 检查当前主题
+console.log('[Theme] current:', document.body.classList.contains('dark'));
+
+// 检查 localStorage
+console.log('[Theme] saved:', localStorage.getItem('theme'));
+```
+
+**解决方案**：
+
+1. 清除 localStorage
+2. 刷新页面
+3. 检查控制台报错
+
+### 文档加载失败
+
+**症状**：点击文档无反应或显示错误
+
+**排查步骤**：
+
+```javascript
+// 检查路径
+console.log('[Load] path:', path);
+
+// 检查响应
+fetch(path)
+  .then(res => console.log('[Load] status:', res.status))
+  .catch(err => console.error('[Load] error:', err));
+```
+
+**常见原因**：
+
+| 原因 | 解决方案 |
+|------|----------|
+| 文件不存在 | 检查 txt/ 目录 |
+| 路径错误 | 验证 index.json 中的路径 |
+| 编码问题 | 转换为 UTF-8 |
+
+## 性能故障
+
+### 页面加载慢
+
+**症状**：首次加载超过 5 秒
+
+**排查步骤**：
+
+```javascript
+// 检查网络请求
+// 浏览器 Network 面板
+
+// 检查文档大小
+ls -lh reader/docs/
+```
+
+**优化建议**：
+
+1. 减少单文档内容
+2. 分割大文档
+3. 优化图片大小
+4. 使用 CDN
+
+### 搜索响应慢
+
+**症状**：搜索输入卡顿
+
+**排查步骤**：
+
+```javascript
+// 检查文档数量
+console.log('[Search] docs count:', allDocs.length);
+
+// 检查单个文档大小
+const sizes = allDocs.map(doc => doc.content?.length || 0);
+console.log('[Search] max size:', Math.max(...sizes));
+```
+
+**优化建议**：
+
+1. 减少文档数量
+2. 禁用搜索功能
+3. 限制单文档大小
+
+## 兼容性问题
+
+### 浏览器不支持
+
+**症状**：某些功能在旧浏览器不工作
+
+**排查步骤**：
+
+```javascript
+// 检查 ES6 支持
+console.log('Arrow functions:', typeof (() => {}) === 'function');
+console.log('Fetch API:', typeof fetch === 'function');
+console.log('localStorage:', typeof localStorage !== 'undefined');
+```
+
+**解决方案**：
+
+1. 使用 Babel 转译
+2. 添加 polyfill
+3. 更新浏览器
+
+### 移动端显示异常
+
+**症状**：手机端布局错乱
+
+**排查步骤**：
+
+```css
+/* 检查响应式断点 */
+@media (max-width: 768px) {
+  .sidebar {
+    /* 检查移动端样式 */
+  }
+}
+```
+
+**解决方案**：
+
+1. 测试不同屏幕尺寸
+2. 调整响应式断点
+3. 验证触摸屏操作
+
+## 故障排查工具
+
+### 本地调试
+
+```bash
+# 启动本地服务器
+python -m http.server 8080
+
+# 使用开发者工具
+# F12 打开浏览器开发者工具
+```
+
+### 日志分析
+
+```javascript
+// 添加调试日志
+console.log('[Debug] Step 1:', value1);
+console.log('[Debug] Step 2:', value2);
+console.log('[Debug] Step 3:', value3);
+```
+
+### 在线工具
+
+| 工具 | 用途 |
+|------|------|
+| JSONLint | JSON 格式验证 |
+| CSS Validator | CSS 语法检查 |
+| JSHint | JavaScript 检查 |
+| Lighthouse | 性能审计 |
+
+## 紧急处理流程
+
+### P0 故障（服务不可用）
+
+1. **确认故障**（5 分钟）
+   - 检查监控告警
+   - 验证用户反馈
+
+2. **应急处理**（15 分钟）
+   - 回滚到上一版本
+   - 启用备用部署
+
+3. **根因分析**（1 小时）
+   - 查看日志
+   - 定位问题
+
+4. **修复验证**（2 小时）
+   - 本地测试
+   - 灰度发布
+
+### 故障报告模板
+
+```markdown
+## 故障报告
+
+### 基本信息
+- 故障时间：
+- 影响范围：
+- 故障级别：
+
+### 问题描述
+...
+
+### 排查过程
+...
+
+### 根本原因
+...
+
+### 解决方案
+...
+
+### 预防措施
+...
+```
+
+## 联系方式
+
+| 角色 | 联系方式 |
+|------|----------|
+| 运维负责人 | admin@example.com |
+| 技术支持 | support@example.com |
+| 紧急电话 | 400-xxx-xxxx |

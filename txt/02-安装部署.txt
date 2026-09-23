@@ -1,0 +1,109 @@
+# 安装部署指南
+
+## 环境要求
+
+- Python 3.8+
+- pip 包管理器
+- Git（可选，用于版本控制）
+
+## 本地安装
+
+### 1. 克隆项目
+
+```bash
+git clone https://github.com/yourusername/doc-reader.git
+cd doc-reader
+```
+
+### 2. 安装依赖
+
+```bash
+pip install python-docx
+```
+
+### 3. 启动服务
+
+```bash
+python -m http.server 8080
+```
+
+### 4. 访问应用
+
+打开浏览器访问：http://localhost:8080
+
+## Vercel 部署
+
+### 1. 准备项目
+
+确保项目结构完整：
+
+```
+├── scripts/
+│   └── sync.py
+├── txt/
+│   └── 文档文件
+├── reader/
+│   ├── index.html
+│   ├── app.js
+│   └── css/
+├── vercel.json
+└── README.md
+```
+
+### 2. 创建 vercel.json
+
+```json
+{
+  "buildCommand": "python scripts/sync.py",
+  "outputDirectory": "reader",
+  "routes": [
+    { "handle": "filesystem" },
+    { "src": "/(.*)", "dest": "/index.html" }
+  ]
+}
+```
+
+### 3. 部署命令
+
+```bash
+npm i -g vercel
+vercel login
+vercel --prod
+```
+
+## GitHub Pages 部署
+
+### 1. 推送代码
+
+```bash
+git add .
+git commit -m "Initial commit"
+git push origin main
+```
+
+### 2. 启用 Pages
+
+在 GitHub 仓库设置中启用 GitHub Pages，选择 `gh-pages` 分支。
+
+## Docker 部署（可选）
+
+### Dockerfile
+
+```dockerfile
+FROM python:3.11-slim
+
+WORKDIR /app
+COPY . .
+
+RUN pip install python-docx
+
+EXPOSE 8080
+CMD ["python", "-m", "http.server", "8080"]
+```
+
+### 构建运行
+
+```bash
+docker build -t doc-reader .
+docker run -p 8080:8080 doc-reader
+```

@@ -1,0 +1,272 @@
+# 命名规范
+
+## 文件命名
+
+### 文档文件
+
+```txt
+# 格式：序号-名称.扩展名
+01-项目简介.txt
+02-安装部署.txt
+03-配置指南.txt
+```
+
+**规则**：
+- 使用 2 位数字序号（01, 02, ...）
+- 序号后跟中划线
+- 名称使用中文
+- 使用统一的扩展名
+
+### 代码文件
+
+| 类型 | 命名方式 | 示例 |
+|------|---------|------|
+| Python 脚本 | snake_case | `sync.py`, `config.py` |
+| JavaScript | camelCase | `app.js`, `utils.js` |
+| CSS 文件 | kebab-case | `style.css`, `theme.css` |
+| HTML 文件 | kebab-case | `index.html`, `article.html` |
+
+### 目录命名
+
+```txt
+# 项目目录
+scripts/           # 脚本目录
+txt/               # 文档目录
+reader/            # 前端资源
+
+# 文档子目录
+07-架构设计/       # 序号-名称
+08-开发规范/
+09-运维手册/
+```
+
+**规则**：
+- 项目目录：全小写，简洁
+- 文档目录：序号-中文名称
+- 避免空格和特殊字符
+
+## 变量命名
+
+### Python
+
+```python
+# 常量（全大写，下划线分隔）
+MAX_CONTENT_WIDTH = 900
+DEFAULT_THEME = 'light'
+
+# 全局变量（带 g_ 前缀）
+g_config = None
+
+# 普通变量（snake_case）
+site_title = '文档阅读器'
+document_list = []
+
+# 私有变量（下划线前缀）
+_private_var = '私有'
+__dunder_var = '特殊私有'
+```
+
+### JavaScript
+
+```javascript
+// 常量（全大写）
+const MAX_CONTENT_WIDTH = 900;
+
+// 普通变量（camelCase）
+let siteTitle = '文档阅读器';
+let documentList = [];
+
+// DOM 元素（以 $ 结尾或使用描述性名称）
+const searchInput = document.getElementById('search-input');
+const $searchInput = document.getElementById('search-input');
+
+// 布尔值（使用 is/has/should 前缀）
+const isEnabled = true;
+const hasContent = true;
+const shouldUpdate = false;
+```
+
+## 函数命名
+
+### Python
+
+```python
+# 普通函数（snake_case）
+def load_config():
+    pass
+
+def scan_directory():
+    pass
+
+# 私有函数（下划线前缀）
+def _internal_function():
+    pass
+
+# 类的实例方法（snake_case）
+class DocumentManager:
+    def load_document(self):
+        pass
+    
+    def save_document(self):
+        pass
+```
+
+### JavaScript
+
+```javascript
+// 普通函数（camelCase）
+function loadConfig() {
+  return fetch('config.json');
+}
+
+function scanDirectory() {
+  // ...
+}
+
+// 事件处理函数（on 开头）
+function onSearchInput() {
+  // ...
+}
+
+function onThemeToggle() {
+  // ...
+}
+
+// 回调函数
+function handleResponse(response) {
+  // ...
+}
+```
+
+## 类命名
+
+### Python
+
+```python
+# 类名（PascalCase）
+class DocumentReader:
+    pass
+
+class SidebarManager:
+    pass
+
+class ThemeController:
+    pass
+```
+
+### JavaScript
+
+```javascript
+// 类（PascalCase）
+class DocumentReader {
+  constructor() {
+    // ...
+  }
+}
+
+// 单例对象
+const AppConfig = {
+  load() { ... },
+  save() { ... }
+};
+```
+
+## CSS 类命名
+
+### BEM 命名法
+
+```css
+/* 块（Block） */
+.sidebar {}
+
+.content {}
+
+/* 元素（Element）__ */
+.sidebar__header {}
+.sidebar__list {}
+.sidebar__item {}
+
+/* 修饰符（Modifier） -- */
+.sidebar--collapsed {}
+.sidebar__item--active {}
+```
+
+### 常用命名
+
+| 含义 | 命名 | 示例 |
+|------|------|------|
+| 侧边栏 | sidebar | `.sidebar` |
+| 内容区 | content | `.content` |
+| 导航 | nav | `.nav`, `.nav-item` |
+| 按钮 | btn | `.btn-primary` |
+| 搜索 | search | `.search-input` |
+| 表格 | table | `.md-table` |
+| 卡片 | card | `.doc-card` |
+
+## 配置项命名
+
+### config.json
+
+```json
+{
+  "source_dir": "txt",
+  "site_title": "文档阅读器",
+  "sidebar_title": "文档目录",
+  "theme": "light",
+  "max_content_width": 900,
+  "enable_search": true,
+  "enable_back_to_top": true,
+  "exclude_patterns": [],
+  "exclude_files": [],
+  "home_page": null
+}
+```
+
+**规则**：
+- 使用 camelCase
+- 语义化命名
+- 避免缩写（除非通用）
+- 保持一致性
+
+## Git 分支命名
+
+| 类型 | 前缀 | 示例 |
+|------|------|------|
+| 功能分支 | feature/ | `feature/search-function` |
+| Bug 修复 | fix/ | `fix/theme-toggle-bug` |
+| 文档更新 | docs/ | `docs/update-readme` |
+| 发布分支 | release/ | `release/v1.0.0` |
+
+## 避免的命名
+
+| 避免 | 原因 | 替代 |
+|------|------|------|
+| 拼音/中英混合 | 可读性差 | 英文 |
+| 单一字母 | 无意义 | 描述性名称 |
+| 数字结尾 | 难以区分 | 描述性名称 |
+| 保留字 | 语法冲突 | 同义词 |
+| 过短名称 | 难以理解 | 完整名称 |
+
+## 命名示例对比
+
+```python
+# 错误
+def a():
+    pass
+
+def get():
+    pass
+
+d = []
+c = {}
+
+# 正确
+def load_documents():
+    pass
+
+def get_site_config():
+    pass
+
+document_list = []
+config_dict = {}
+```

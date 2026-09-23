@@ -1,0 +1,300 @@
+# 部署流程
+
+## 部署环境
+
+| 环境 | 要求 |
+|------|------|
+| Python | 3.8+ |
+| pip | 最新版 |
+| Git | 任意版本 |
+
+## Vercel 部署
+
+### 1. 准备工作
+
+```bash
+# 克隆项目
+git clone https://github.com/yourusername/doc-reader.git
+cd doc-reader
+
+# 安装 python-docx
+pip install python-docx
+```
+
+### 2. Vercel 配置
+
+确保项目根目录有 `vercel.json`：
+
+```json
+{
+  "buildCommand": "python scripts/sync.py",
+  "outputDirectory": "reader",
+  "routes": [
+    { "handle": "filesystem" },
+    { "src": "/(.*)", "dest": "/index.html" }
+  ]
+}
+```
+
+### 3. 部署方式
+
+**方式一：Vercel CLI**
+
+```bash
+# 安装 CLI
+npm i -g vercel
+
+# 登录
+vercel login
+
+# 部署（首次）
+vercel
+
+# 生产部署
+vercel --prod
+```
+
+**方式二：Vercel 网站**
+
+1. 登录 https://vercel.com
+2. 点击 "Add New..." → "Project"
+3. 导入 GitHub 仓库
+4. 配置构建命令：`python scripts/sync.py`
+5. 配置输出目录：`reader`
+6. 点击 "Deploy"
+
+### 4. 验证部署
+
+```bash
+# 本地预览
+vercel dev
+```
+
+访问 http://localhost:3000 验证。
+
+## GitHub Pages 部署
+
+### 1. 准备工作
+
+```bash
+# 克隆项目
+git clone https://github.com/yourusername/doc-reader.git
+cd doc-reader
+```
+
+### 2. 创建部署脚本
+
+`.github/workflows/deploy.yml`：
+
+```yaml
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install python-docx
+        run: pip install python-docx
+
+      - name: Generate HTML
+        run: python scripts/sync.py
+
+      - name: Deploy
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./reader
+```
+
+### 3. 配置仓库
+
+1. 进入仓库 Settings → Pages
+2. Source 选择 "GitHub Actions"
+3. 推送代码触发部署
+
+### 4. 访问地址
+
+```
+https://yourusername.github.io/doc-reader/
+```
+
+## Docker 部署
+
+### 1. 创建 Dockerfile
+
+```dockerfile
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# 安装依赖
+RUN pip install --no-cache-dir python-docx
+
+# 复制项目
+COPY . .
+
+# 生成文档
+RUN python scripts/sync.py
+
+# 暴露端口
+EXPOSE 8080
+
+# 启动服务
+CMD ["python", "-m", "http.server", "8080"]
+```
+
+### 2. 构建镜像
+
+```bash
+docker build -t doc-reader .
+```
+
+### 3. 运行容器
+
+```bash
+# 本地运行
+docker run -p 8080:8080 doc-reader
+
+# 后台运行
+docker run -d -p 8080:8080 --name doc-reader doc-reader
+```
+
+### 4. Docker Compose
+
+`docker-compose.yml`：
+
+```yaml
+version: '3.8'
+
+services:
+  doc-reader:
+    build: .
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./txt:/app/txt
+    restart: unless-stopped
+```
+
+启动：
+
+```bash
+docker-compose up -d
+```
+
+## 手动部署
+
+### 1. 同步文档
+
+```bash
+python scripts/sync.py
+```
+
+### 2. 上传文件
+
+```bash
+# 使用 rsync 上传到服务器
+rsync -avz --delete reader/ user@server:/path/to/doc-root/
+```
+
+### 3. 配置 Web 服务器
+
+**Nginx**：
+
+```nginx
+server {
+    listen 80;
+    server_name docs.example.com;
+    root /var/www/doc-reader;
+    index index.html;
+    
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+}
+```
+
+## 环境配置
+
+### 开发环境
+
+```bash
+# 本地启动
+python -m http.server 8080
+```
+
+### 测试环境
+
+```bash
+# 同步文档
+python scripts/sync.py
+
+# 使用测试配置
+export SITE_TITLE="测试文档"
+```
+
+### 生产环境
+
+```bash
+# 使用生产配置
+export SITE_TITLE="正式文档"
+python scripts/sync.py
+```
+
+## 回滚流程
+
+### Vercel 回滚
+
+1. 进入 Vercel Dashboard
+2. 选择 Deployment
+3. 点击 "Redeploy" 之前的版本
+
+### GitHub Pages 回滚
+
+```bash
+# 查看历史
+git log --oneline
+
+# 回滚到指定版本
+git revert <commit-hash>
+
+# 或强制回滚
+git checkout <commit-hash> -- .
+git commit -m "Rollback to <commit-hash>"
+git push
+```
+
+### Docker 回滚
+
+```bash
+# 查看历史镜像
+docker images doc-reader
+
+# 回滚到指定镜像
+docker run -p 8080:8080 doc-reader:<tag>
+```
+
+## 部署检查清单
+
+- [ ] Python 环境正常
+- [ ] python-docx 已安装
+- [ ] 文档已同步
+- [ ] index.json 生成正确
+- [ ] HTML 文件无错误
+- [ ] 侧边栏可正常显示
+- [ ] 文档可正常加载
+- [ ] 搜索功能正常
+- [ ] 主题切换正常
+- [ ] 移动端适配正常

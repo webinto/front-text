@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="utf-8">
+  <title>browser-selftest</title>
+</head>
+
+<body>
+  <pre id="out">running</pre>
+  <iframe id="frame" src="index.html" style="width:1280px;height:800px;border:0"></iframe>
+  <script>
+    // 真浏览器自检页（由 checks/browser-check.py 临时放进 reader/ 后执行、执行完删除）
+    // 驱动真实 index.html，验证：侧栏命中片段 → 点结果定位到正文命中处并高亮 → 清空后复原
+    // 关键词通过 ?kw= 传入，期望值由 Python 侧从 reader/search-index.json 现算
+    const out = document.getElementById('out');
+    const notes = {};
+    const flush = () => {
+      out.textContent = Object.keys(notes).map((k) => k + ' = ' + notes[k]).join('\n');
+    };
+    const note = (k, v) => { notes[k] = v; flush(); };
+    const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+    async function waitFor(fn, tries = 60, gap = 100) {
+      for (let i = 0; i < tries; i++) {
+        const v = fn();
+        if (v) return v;
+        await sleep(gap);
+      }
+      return null;
+    }
+
+    const keyword = new URLSearchParams(location.search).get('kw') || '回滚';
+    const mode = new URLSearchParams(location.search).get('mode') || 'desktop';
+
+    // 移动端场景：抽屉开合与桌面记忆态（collapsed）解耦。只跑移动端用例，不跑搜索/阅读位置流程
+    async function mobilePhase(frame) {
+      const sleepMs = sleep;
+      await waitFor(() => {
+        const dd = frame.contentDocument;
+        return dd && dd.querySelectorAll('#sidebar-list a[data-path]').length ? true : null;
+      });
+      let w = frame.contentWindow;
+      let d = frame.contentDocument;
+
+      // 1) 种入桌面记忆态并刷新：移动端 initTheme 应拒绝写入 collapsed。
+      //    必须等到「新 document 且目录已渲染」，reload 期间 contentDocument 还是旧文档
+      const oldDoc = frame.contentDocument;
+      w.localStorage.setItem('sidebarCollapsed', 'true');
+      w.location.reload();
+      await waitFor(() => {
+        const dd = frame.contentDocument;
+        return dd && dd !== oldDoc && dd.querySelectorAll('#sidebar-list a[data-path]').length ? true : null;
+      }, 100, 100);
+      w = frame.contentWindow;
+      d = frame.contentDocument;
+      const q2 = (sel) => d.querySelectorAll(sel);
+      const sb = d.getElementById('sidebar');
+      // headless 的 virtual time 会把 transition 冻在起始帧，量几何前先禁掉过渡
+      const noTransition = d.createElement('style');
+      noTransition.textContent = '* { transition: none !important; animation: none !important; }';
+      d.head.appendChild(noTransition);
+      note('m_seeded_guard', !sb.classList.contains('collapsed') ? '是' : '否');
+
+      // 2) 点汉堡必须能打开（死角 A：collapsed 残留曾压过 mobile-open）
+      d.getElementById('mobile-menu-btn').click();
+      await sleepMs(400);
+      note('m_open_classes', sb.classList.contains('mobile-open') && !sb.classList.contains('collapsed') ? '是' : '否');
+      note('m_open_left', Math.round(sb.getBoundingClientRect().left));
+      note('m_body_open', d.body.classList.contains('sidebar-open') ? '是' : '否');
+
+      // 3) footer「收起」= 关抽屉，无遮罩残留（死角 B）
+      d.getElementById('sidebar-toggle').click();
+      await sleepMs(400);
+      note('m_closed', !sb.classList.contains('mobile-open') && !sb.classList.contains('collapsed') ? '是' : '否');
+      note('m_body_closed', !d.body.classList.contains('sidebar-open') ? '是' : '否');
+      note('m_overlay_display', d.defaultView.getComputedStyle(d.getElementById('sidebar-overlay')).display);
+      note('m_menu_btn_display', d.defaultView.getComputedStyle(d.getElementById('mobile-menu-btn')).display);
+
+      // 4) 点文档链接 → 抽屉自动收起
+      const link = q2('#sidebar-list a[data-path]')[0];
+      if (link) {
+        link.click();
+        await sleepMs(700);
+      }
+      note('m_doc_click_closes', !sb.classList.contains('mobile-open') ? '是' : '否');
+      note('MOBILEDONE', 'yes');
+    }
+
+    (async () => {
+      try {
+        const frame = document.getElementById('frame');
+        if (mode === 'mobile') {
+          frame.style.width = '375px';
+          frame.style.height = '667px';
+        }
+        await new Promise((r) => frame.addEventListener('load', r, { once: true }));
+        const w = frame.contentWindow;
+        const d = frame.contentDocument;
+        const q = (sel) => d.querySelectorAll(sel);
+        const viewerText = () => d.getElementById('viewer').textContent;
+
+        if (mode === 'mobile') {
+          await mobilePhase(frame);
+          return;
+        }
+
+        note('kw', keyword);
+        note('tree_count', await waitFor(
+          () => q('#sidebar-list a[data-path]').length ? q('#sidebar-list a[data-path]').length : null));
+        note('md_ok', typeof w.markdownit);
+        note('hljs_ok', typeof w.hljs);
+
+        // 先打开一篇文档，模拟「先看文档 → 再搜索 → 点结果」
+        const firstDoc = [...q('#sidebar-list a[data-path]')].find((a) => a.dataset.path !== '');
+        const marker = firstDoc.dataset.path;
+        firstDoc.click();
+        await waitFor(() => (viewerText().length > 60) || null);
+        note('first_doc', marker);
+        note('doc_opened', viewerText().length > 60 ? '是' : '否');
+
+        // 搜索
+        const input = d.getElementById('search-input');
+        const textBefore = viewerText();
+        input.value = keyword;
+        input.dispatchEvent(new w.Event('input', { bubbles: true }));
+        const hits = await waitFor(() => q('#sidebar-list a[data-search-hit]').length
+          ? q('#sidebar-list a[data-search-hit]') : null);
+        note('hits', hits ? hits.length : 0);
+        note('header', d.querySelector('#sidebar-list li.folder') ? d.querySelector('#sidebar-list li.folder').textContent : '');
+        note('snippet_marked', d.querySelector('#sidebar-list .search-snippet .search-hit') ? '是' : '否');
+        note('snippet_text', d.querySelector('#sidebar-list .search-snippet') ? d.querySelector('#sidebar-list .search-snippet').textContent.slice(0, 60) : '(无)');
+        note('count_badge', d.querySelector('#sidebar-list .search-count') ? d.querySelector('#sidebar-list .search-count').textContent : '(无)');
+        note('viewer_kept', viewerText() === textBefore ? '是' : '否');
+
+        // 点第一条结果：换文档 + 定位 + 正文高亮
+        hits[0].click();
+        const marks = await waitFor(() => q('#viewer mark.doc-hit').length ? q('#viewer mark.doc-hit') : null);
+        note('marks', marks ? marks.length : 0);
+        note('first_mark_text', marks && marks.length ? marks[0].textContent : '(无)');
+        note('first_has_flag', marks && marks.length && marks[0].classList.contains('doc-hit-first') ? '是' : '否');
+        note('hit_doc', d.querySelector('#viewer h1') ? d.querySelector('#viewer h1').textContent : '(无)');
+        note('hash', String(w.location.hash));
+        note('scrollY', Math.round(w.scrollY));
+        const html = d.querySelector('#viewer').innerHTML;
+        const at = html.indexOf('doc-hit-first');
+        note('excerpt', at === -1 ? '(未找到)' : html.slice(Math.max(0, at - 80), at + 110).replace(/\s+/g, ' '));
+        note('svg_intact', q('#viewer svg').length + ' svg / ' + q('#viewer svg mark').length + ' 个标记落在 svg 内');
+
+        // 点第二条结果：切到另一篇并重新定位
+        const hits2 = q('#sidebar-list a[data-search-hit]');
+        if (hits2.length > 1) {
+          hits2[1].click();
+          await sleep(700);
+          note('marks_second_doc', q('#viewer mark.doc-hit').length);
+          note('second_doc', d.querySelector('#viewer h1') ? d.querySelector('#viewer h1').textContent : '(无)');
+        }
+
+        // 清空搜索：目录树恢复、正文标记撤掉、文档不变
+        const keepDoc = d.querySelector('#viewer h1') ? d.querySelector('#viewer h1').textContent : '';
+        input.value = '';
+        input.dispatchEvent(new w.Event('input', { bubbles: true }));
+        note('tree_after_clear', await waitFor(
+          () => (q('#sidebar-list a[data-path]').length === Number(notes.tree_count) ? Number(notes.tree_count) : null)));
+        note('marks_after_clear', q('#viewer mark.doc-hit').length);
+        note('doc_after_clear', d.querySelector('#viewer h1') ? d.querySelector('#viewer h1').textContent : '(无)');
+        note('doc_unchanged', (d.querySelector('#viewer h1') ? d.querySelector('#viewer h1').textContent : '') === keepDoc ? '是' : '否');
+
+        note('DONE', 'yes');
+
+        // 阶段三b：DOMPurify —— DOCX HTML 的净化函数必须剥掉脚本与事件属性、保留正常标签
+        if (typeof w.__sanitizeDocHtml === 'function') {
+          const dirty = '<p onclick="evil()">a</p><b>b</b>' + '<scr' + 'ipt>alert(1)</scr' + 'ipt>';
+          const clean = w.__sanitizeDocHtml(dirty, 'probe.html');
+          note('san_stripped', clean.indexOf('onclick') === -1 && clean.toLowerCase().indexOf('<scr' + 'ipt') === -1 ? '是' : '否：' + clean.slice(0, 80));
+          note('san_keeps_p', clean.indexOf('<p') !== -1 && clean.indexOf('<b>') !== -1 ? '是' : '否');
+        } else {
+          note('san_stripped', '(净化函数缺失)');
+          note('san_keeps_p', '(净化函数缺失)');
+        }
+
+        // 阶段三：关键词只出现在 Mermaid 图表里 → 图表必须完好，且绝不能往 SVG 里插 <mark>
+        const kw3 = new URLSearchParams(location.search).get('kw3') || '';
+        if (kw3) {
+          input.value = kw3;
+          input.dispatchEvent(new w.Event('input', { bubbles: true }));
+          const hits3 = await waitFor(() => q('#sidebar-list a[data-search-hit]').length
+            ? q('#sidebar-list a[data-search-hit]') : null);
+          note('hits3', hits3 ? hits3.length : 0);
+          if (hits3 && hits3.length) {
+            hits3[0].click();
+            await waitFor(() => (q('#viewer svg').length ? true : null), 50, 100);
+            note('svg3_count', q('#viewer svg').length);
+            note('marks3', q('#viewer mark.doc-hit').length);
+            note('marks_in_svg3', q('#viewer svg mark').length);
+            note('svg3_text_kept', d.getElementById('viewer').textContent.indexOf(kw3) !== -1 ? '是' : '否');
+          }
+        }
+        // 阶段四：阅读位置记忆 —— 换一篇再切回来，应回到原来的位置
+        input.value = '';
+        input.dispatchEvent(new w.Event('input', { bubbles: true }));
+        await waitFor(() => (q('#sidebar-list a[data-path]').length === Number(notes.tree_count) ? true : null));
+        const links = [...q('#sidebar-list a[data-path]')];
+        const longDoc = links.find((a) => a.dataset.path.indexOf('09-') === 0
+          && a.dataset.path.indexOf('故障排查') !== -1);
+        const shortDoc = links.find((a) => a.dataset.path.indexOf('01-') === 0);
+        if (longDoc && shortDoc) {
+          longDoc.click();
+          await waitFor(() => (viewerText().length > 200 ? true : null));
+          w.scrollTo({ top: 900, behavior: 'instant' });
+          await sleep(300);
+          note('pos_before', Math.round(w.scrollY));
+          shortDoc.click();
+          await sleep(700);
+          note('pos_other_doc', Math.round(w.scrollY));
+          longDoc.click();
+          await sleep(700);
+          note('pos_restored', Math.round(w.scrollY));
+          note('pos_stored', (() => {
+            try { return Object.keys(JSON.parse(w.localStorage.getItem('readPos') || '{}')).length; }
+            catch (e) { return 'err'; }
+          })());
+        }
+        note('ALLDONE', 'yes');
+      } catch (e) {
+        note('ERROR', e && e.message ? e.message : String(e));
+      }
+    })();
+  </script>
+</body>
+
+</html>

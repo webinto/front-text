@@ -1,0 +1,26 @@
+# 轻量级文档阅读器
+
+## 项目概述
+
+轻量级文档阅读器是一个简洁高效的文档展示工具，专为技术文档和项目说明设计。本项目旨在提供一个轻量级、易部署的文档管理系统，支持多种文档格式的自动渲染。
+
+## 核心特性
+
+- **多格式支持**：TXT、Markdown、DOCX 自动渲染
+- **智能目录**：树形结构展示，无限层级嵌套
+- **搜索功能**：快速定位目标文档
+- **暗色模式**：主题偏好自动保存
+- **Mermaid 图表**：流程图、甘特图、关系图支持
+- **自动同步**：GitHub Actions 自动部署
+
+## 技术栈
+
+- **前端**：原生 HTML/CSS/JavaScript
+- **后端**：Python 同步脚本
+- **部署**：Vercel / GitHub Pages
+- **文档格式**：TXT、Markdown、DOCX
+
+## 项目地址
+
+- GitHub：https://github.com/yourusername/doc-reader
+- 演示地址：https://your-project.vercel.app

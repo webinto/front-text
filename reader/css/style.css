@@ -1,0 +1,953 @@
+html {
+  /* Force scrollbar to always be visible to prevent content shifting/flickering */
+  overflow-y: scroll;
+  scrollbar-gutter: stable;
+  scroll-behavior: smooth;
+}
+
+/* Custom Scrollbar Styling */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #c1c1c1, #a1a1a1);
+  border-radius: 5px;
+  border: 2px solid #f1f1f1;
+  transition: background 0.3s;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #0366d6, #58a6ff);
+}
+
+/* Dark mode scrollbar */
+body.dark ::-webkit-scrollbar-track,
+body.dark::-webkit-scrollbar-track {
+  background: #21262d;
+}
+
+body.dark ::-webkit-scrollbar-thumb,
+body.dark::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #484f58, #30363d);
+  border-color: #21262d;
+}
+
+body.dark ::-webkit-scrollbar-thumb:hover,
+body.dark::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #58a6ff, #a78bfa);
+}
+
+/* Firefox scrollbar */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #a1a1a1 #f1f1f1;
+}
+
+body.dark * {
+  scrollbar-color: #484f58 #21262d;
+}
+
+/* Reading Progress Bar - Fixed position to prevent layout reflow */
+.reading-progress-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 3px;
+  width: 100%;
+  background: linear-gradient(90deg, #0366d6, #58a6ff);
+  z-index: 9999;
+  pointer-events: none;
+  /* 用 GPU 合成层做进度，避免滚动时每帧触发 layout */
+  transform: scaleX(0);
+  transform-origin: 0 50%;
+  will-change: transform;
+}
+
+body.dark .reading-progress-bar {
+  background: linear-gradient(90deg, #58a6ff, #a78bfa);
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  /* 自定义 :active 反馈，压掉系统默认的点击高亮 */
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  display: flex;
+  min-height: 100vh;
+  font-family: "MiSans", -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+  line-height: 1.8;
+  color: #24292e;
+  background: #f6f8fa;
+  /* Restore transition for smooth theme switching */
+  transition: background-color 0.3s, color 0.3s;
+}
+
+body.dark {
+  color: #c9d1d9;
+  background: #0d1117;
+}
+
+.sidebar {
+  width: 280px;
+  background: #fafbfc;
+  border-right: 1px solid #e1e4e8;
+  /* 顶部（搜索）与底部（按钮）固定，中间列表自己滚 */
+  padding: 20px 0 0;
+  height: 100vh;
+  position: fixed;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  /* Prevent sidebar from shrinking */
+  transition: transform 0.3s ease, width 0.3s ease, background-color 0.3s, border-color 0.3s;
+}
+
+body.dark .sidebar {
+  background: #161b22;
+  border-color: #30363d;
+}
+
+.sidebar.collapsed {
+  transform: translateX(-280px);
+}
+
+.sidebar h3 {
+  flex: none;
+  padding: 0 20px 10px;
+  border-bottom: 1px solid #e1e4e8;
+  font-size: 14px;
+  color: #586069;
+  margin-bottom: 10px;
+  text-transform: uppercase;
+  transition: color 0.3s, border-color 0.3s;
+}
+
+body.dark .sidebar h3 {
+  color: #8b949e;
+  border-color: #30363d;
+}
+
+#search-container {
+  flex: none;
+  padding: 0 20px;
+  margin-bottom: 16px;
+}
+
+#search-input {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #e1e4e8;
+  border-radius: 4px;
+  font-size: 14px;
+  background: #fff;
+  color: #24292e;
+  transition: all 0.2s ease;
+}
+
+#search-input:focus {
+  outline: none;
+  border-color: #0366d6;
+  box-shadow: 0 0 0 3px rgba(3, 102, 214, 0.1);
+}
+
+#search-input::placeholder {
+  color: #6a737d;
+}
+
+body.dark #search-input {
+  background: #0d1117;
+  border-color: #30363d;
+  color: #c9d1d9;
+}
+
+body.dark #search-input::placeholder {
+  color: #8b949e;
+}
+
+body.dark #search-input:focus {
+  border-color: #58a6ff;
+  box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.1);
+}
+
+.sidebar ul {
+  list-style: none;
+}
+
+/* 只有顶层列表滚动，目录嵌套列表不受影响 */
+#sidebar-list {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 0 20px;
+  scrollbar-gutter: stable;
+  overscroll-behavior: contain;   /* 列表滚到头不带动 body 橡皮筋 */
+}
+
+.sidebar li {
+  margin: 4px 0;
+}
+
+.sidebar a {
+  display: block;
+  padding: 6px 12px;
+  color: #0366d6;
+  text-decoration: none;
+  border-radius: 4px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+body.dark .sidebar a {
+  color: #58a6ff;
+}
+
+.sidebar a:hover {
+  background: #f1f8ff;
+}
+
+body.dark .sidebar a:hover {
+  background: #1f6feb33;
+}
+
+.sidebar .folder {
+  font-weight: 600;
+  color: #24292e;
+  padding: 8px 12px 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  transition: color 0.3s, background-color 0.2s;
+  border-radius: 4px;
+}
+
+body.dark .sidebar .folder {
+  color: #c9d1d9;
+}
+
+.sidebar .folder:hover {
+  background: #f1f8ff;
+}
+
+body.dark .sidebar .folder:hover {
+  background: #1f6feb33;
+}
+
+.sidebar .folder-name {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.sidebar .folder-arrow {
+  font-size: 10px;
+  color: #586069;
+  transition: transform 0.2s, color 0.3s;
+}
+
+body.dark .sidebar .folder-arrow {
+  color: #8b949e;
+}
+
+/* 搜索结果：标题 + 命中片段 + 路径/命中次数 */
+.search-hit {
+  background: #fff3b0;
+  color: #24292e;
+  border-radius: 2px;
+  padding: 0 1px;
+}
+
+body.dark .search-hit {
+  background: #6b4c00;
+  color: #ffe9a8;
+}
+
+.sidebar .sub-item a .search-title,
+.sidebar .sub-item a .search-meta {
+  display: block;
+}
+
+.sidebar .sub-item a .search-snippet {
+  margin-top: 4px;
+  font-size: 12px;
+  line-height: 1.45;
+  color: #6a737d;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.sidebar .sub-item a .search-meta {
+  margin-top: 4px;
+  font-size: 11px;
+  line-height: 1.4;
+  color: #8b949e;
+}
+
+body.dark .sidebar .sub-item a .search-snippet,
+body.dark .sidebar .sub-item a .search-meta {
+  color: #8b949e;
+}
+
+.search-path {
+  display: block;
+  word-break: break-all;
+}
+
+.search-count {
+  display: block;
+}
+
+/* 正文里的命中高亮：从搜索结果点进来时定位并标出所有命中 */
+.doc-hit {
+  background: #fff3b0;
+  color: inherit;
+  border-radius: 2px;
+  padding: 0 1px;
+}
+
+.doc-hit-first {
+  background: #ffd75e;
+  box-shadow: 0 0 0 2px rgba(255, 215, 94, 0.45);
+}
+
+body.dark .doc-hit {
+  background: #6b4c00;
+  color: #ffe9a8;
+}
+
+body.dark .doc-hit-first {
+  background: #8a6100;
+  box-shadow: 0 0 0 2px rgba(255, 233, 168, 0.35);
+}
+
+
+
+.sidebar-footer {
+  flex: none;
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 12px 20px 16px;
+  border-top: 1px solid #e1e4e8;
+  transition: border-color 0.3s;
+}
+
+body.dark .sidebar-footer {
+  border-color: #30363d;
+}
+
+.sidebar-btn {
+  width: 36px;
+  height: 36px;
+  border: 1px solid #e1e4e8;
+  background: #fff;
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  color: #24292e;
+}
+
+body.dark .sidebar-btn {
+  background: #21262d;
+  border-color: #30363d;
+  color: #c9d1d9;
+}
+
+.sidebar-btn:hover {
+  background: #f1f8ff;
+  border-color: #0366d6;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(3, 102, 214, 0.15);
+}
+
+body.dark .sidebar-btn:hover {
+  background: #1f6feb33;
+  border-color: #58a6ff;
+  box-shadow: 0 2px 8px rgba(88, 166, 255, 0.15);
+}
+
+.sidebar-btn svg {
+  transition: transform 0.2s ease;
+}
+
+.sidebar-btn:hover svg {
+  transform: scale(1.1);
+}
+
+.sidebar-collapsed-btns {
+  position: fixed;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  background: #fafbfc;
+  border: 1px solid #e1e4e8;
+  border-left: none;
+  border-radius: 0 8px 8px 0;
+  padding: 8px 4px 8px 0;
+  display: none;
+  flex-direction: column;
+  gap: 4px;
+  z-index: 100;
+  box-shadow: 2px 0 12px rgba(0, 0, 0, 0.06);
+  transition: background-color 0.3s, border-color 0.3s;
+}
+
+body.dark .sidebar-collapsed-btns {
+  background: #161b22;
+  border-color: #30363d;
+}
+
+.sidebar.collapsed~.sidebar-collapsed-btns {
+  display: flex;
+}
+
+.sidebar-collapsed-btns .sidebar-btn {
+  border-radius: 0 8px 8px 0;
+  border-left: none;
+}
+
+.content {
+  flex: 1;
+  margin-left: 280px;
+  padding: 40px 60px;
+  max-width: 900px;
+  /* Flexbox fix: allow shrinking below content size */
+  min-width: 0;
+  width: auto;
+  /* Let flexbox handle width */
+  overflow-x: hidden;
+  /* Force text wrapping for long words/URLs */
+  overflow-wrap: break-word;
+  word-break: break-word;
+  /* Restore transition for smooth sidebar collapse */
+  transition: margin-left 0.3s ease, max-width 0.3s ease;
+}
+
+body.dark .content {
+  background: #0d1117;
+}
+
+/* 正文里若原样出现页面级布局元素（示例代码漏写围栏时会发生），
+   不允许其夺取整页布局：position:fixed / 280px 宽度 / margin-left 一律失效 */
+#viewer .sidebar,
+#viewer .content,
+#viewer .sidebar-overlay,
+#viewer .mobile-menu-btn,
+#viewer #back-to-top {
+  position: static;
+  width: auto;
+  max-width: 100%;
+  height: auto;
+  margin: 0;
+  padding: 0;
+  transform: none;
+  overflow: visible;
+  display: block;
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+  z-index: auto;
+}
+
+.docx-image {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  margin: 20px auto;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.sidebar.collapsed+.content {
+  margin-left: 0;
+  max-width: 1200px;
+}
+
+.content pre {
+  position: relative;
+  background: #f6f8fa;
+  padding: 16px;
+  border-radius: 6px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  margin: 16px 0;
+  transition: background-color 0.3s;
+}
+
+body.dark .content pre {
+  background: #161b22;
+}
+
+/* Copy Button for Code Blocks */
+.copy-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  padding: 4px 10px;
+  font-size: 12px;
+  color: #586069;
+  background: rgba(255, 255, 255, 0.8);
+  border: 1px solid #e1e4e8;
+  border-radius: 4px;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.2s, background-color 0.2s, color 0.2s;
+  z-index: 10;
+}
+
+.content pre:hover .copy-btn {
+  opacity: 1;
+}
+
+.copy-btn:hover {
+  background: #0366d6;
+  color: #fff;
+  border-color: #0366d6;
+}
+
+body.dark .copy-btn {
+  background: rgba(30, 35, 42, 0.9);
+  border-color: #30363d;
+  color: #c9d1d9;
+}
+
+body.dark .copy-btn:hover {
+  background: #58a6ff;
+  color: #0d1117;
+  border-color: #58a6ff;
+}
+
+/* Mermaid Diagram Container */
+.mermaid-container {
+  background: #fff;
+  border-radius: 8px;
+  padding: 20px;
+  margin: 16px 0;
+  text-align: center;
+  overflow-x: auto;
+}
+
+body.dark .mermaid-container {
+  background: #161b22;
+}
+
+.mermaid-container svg {
+  max-width: 100%;
+  height: auto;
+}
+
+.content code {
+  font-family: "Cascadia Code", "JetBrains Mono", SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace;
+  font-size: 14px;
+  background: #f6f8fa;
+  padding: 0.2em 0.4em;
+  border-radius: 3px;
+  transition: background-color 0.3s;
+}
+
+body.dark .content code {
+  background: #161b22;
+  color: #e6edf3;
+}
+
+.content pre code {
+  background: none;
+  padding: 0;
+}
+
+.content p {
+  margin: 16px 0;
+}
+
+.content h1,
+.content h2,
+.content h3 {
+  margin-top: 2em;
+  margin-bottom: 1em;
+  border-bottom: 1px solid #eaecef;
+  padding-bottom: 0.3em;
+  font-weight: 500;
+  line-height: 1.25;
+  transition: border-color 0.3s;
+}
+
+body.dark .content h1,
+body.dark .content h2,
+body.dark .content h3 {
+  border-color: #30363d;
+}
+
+.content h1 {
+  font-size: 2em;
+}
+
+.content h2 {
+  font-size: 1.5em;
+}
+
+.content h3 {
+  font-size: 1.25em;
+}
+
+/* h4~h6 在 Word 文档里很常见，浏览器默认样式既小又没间距 */
+.content h4,
+.content h5,
+.content h6 {
+  margin-top: 1.6em;
+  margin-bottom: 0.8em;
+  font-weight: 500;
+  line-height: 1.25;
+}
+
+.content h4 {
+  font-size: 1.1em;
+}
+
+.content h5 {
+  font-size: 1em;
+}
+
+.content h6 {
+  font-size: 0.9em;
+  color: #6a737d;
+}
+
+body.dark .content h6 {
+  color: #8b949e;
+}
+
+.content ul,
+.content ol {
+  margin: 16px 0;
+  padding-left: 24px;
+}
+
+.content li {
+  margin: 4px 0;
+}
+
+.content hr {
+  height: 0.25em;
+  padding: 0;
+  margin: 24px 0;
+  background-color: #e1e4e8;
+  border: 0;
+  transition: background-color 0.3s;
+}
+
+body.dark .content hr {
+  background-color: #30363d;
+}
+
+.content blockquote {
+  margin: 16px 0;
+  padding: 0 1em;
+  color: #6a737d;
+  border-left: 0.25em solid #dfe2e5;
+  transition: color 0.3s, border-color 0.3s;
+}
+
+body.dark .content blockquote {
+  color: #8b949e;
+  border-color: #30363d;
+}
+
+/* Enhancing Hyperlinks */
+.content a {
+  color: #0969da;
+  text-decoration: none;
+  border-bottom: 1px solid rgba(9, 105, 218, 0.4);
+  background-color: transparent;
+  border-radius: 3px;
+  padding: 0 2px;
+  margin: 0 -2px;
+  transition: all 0.2s ease-in-out;
+  font-weight: 500;
+}
+
+.content a:hover {
+  background-color: #ddf4ff;
+  border-bottom-color: #0969da;
+  color: #0969da;
+  text-decoration: none;
+}
+
+body.dark .content a {
+  color: #58a6ff;
+  border-bottom-color: rgba(88, 166, 255, 0.4);
+}
+
+body.dark .content a:hover {
+  background-color: rgba(56, 139, 253, 0.15);
+  border-bottom-color: #58a6ff;
+  color: #58a6ff;
+}
+
+/* Responsive Table Wrapper */
+.content table,
+.content table.md-table {
+  display: block;
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border-collapse: collapse;
+  margin: 16px 0;
+  font-size: 14px;
+}
+
+.content th,
+.content td {
+  padding: 10px 14px;
+  border: 1px solid #dfe2e5;
+  text-align: left;
+  transition: border-color 0.3s, background-color 0.3s;
+}
+
+body.dark .content th,
+body.dark .content td {
+  border-color: #30363d;
+}
+
+.content th {
+  font-weight: 600;
+  background-color: #f6f8fa;
+}
+
+body.dark .content th {
+  background-color: #161b22;
+}
+
+.content tr:nth-child(2n) {
+  background-color: #fafbfc;
+}
+
+body.dark .content tr:nth-child(2n) {
+  background-color: #161b22;
+}
+
+.content tr:hover {
+  background-color: #f1f8ff;
+}
+
+body.dark .content tr:hover {
+  background-color: #1f6feb33;
+}
+
+#back-to-top {
+  position: fixed;
+  bottom: calc(30px + env(safe-area-inset-bottom, 0px));
+  right: calc(30px + env(safe-area-inset-right, 0px));
+  width: 48px;
+  height: 48px;
+  background: linear-gradient(135deg, #0366d6, #0256b9);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  z-index: 1000;
+  box-shadow: 0 4px 12px rgba(3, 102, 214, 0.3);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  /* Always flex */
+  opacity: 0;
+  visibility: hidden;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+#back-to-top.visible {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transform: translateY(0);
+}
+
+#back-to-top:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(3, 102, 214, 0.4);
+  background: linear-gradient(135deg, #0256b9, #0366d6);
+}
+
+#back-to-top svg {
+  width: 20px;
+  height: 20px;
+  stroke: white;
+  stroke-width: 2.5;
+}
+
+body.dark #back-to-top {
+  background: linear-gradient(135deg, #1f6feb, #388bfd);
+  box-shadow: 0 4px 12px rgba(56, 139, 253, 0.3);
+}
+
+body.dark #back-to-top:hover {
+  box-shadow: 0 6px 20px rgba(56, 139, 253, 0.5);
+  background: linear-gradient(135deg, #388bfd, #1f6feb);
+}
+
+.mobile-menu-btn {
+  display: none;
+  position: fixed;
+  top: calc(12px + env(safe-area-inset-top, 0px));
+  left: calc(12px + env(safe-area-inset-left, 0px));
+  width: 40px;
+  height: 40px;
+  background: #fff;
+  border: 1px solid #e1e4e8;
+  border-radius: 8px;
+  cursor: pointer;
+  z-index: 1001;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  transition: all 0.2s ease, opacity 0.2s ease, transform 0.2s ease;
+}
+
+.mobile-menu-btn.hidden {
+  opacity: 0;
+  transform: translateY(-10px);
+  pointer-events: none;
+}
+
+body.dark .mobile-menu-btn {
+  background: #21262d;
+  border-color: #30363d;
+  color: #c9d1d9;
+}
+
+.mobile-menu-btn:hover {
+  background: #f1f8ff;
+  border-color: #0366d6;
+}
+
+body.dark .mobile-menu-btn:hover {
+  background: #1f6feb33;
+  border-color: #58a6ff;
+}
+
+.sidebar-overlay {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 998;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+@media (max-width: 768px) {
+  .mobile-menu-btn {
+    display: flex;
+    opacity: 1;
+  }
+
+  body.sidebar-open .mobile-menu-btn {
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 280px;
+    height: 100dvh;   /* 软键盘弹出时 100vh 不变会遮住底部按钮，dvh 跟随可视高度 */
+    z-index: 999;
+    transform: translateX(-100%);
+    transition: transform 0.3s ease;
+    box-shadow: 2px 0 16px rgba(0, 0, 0, 0.15);
+  }
+
+  /* 声明顺序即覆盖顺序：collapsed 是桌面记忆态，移动端一律让位给 mobile-open */
+  .sidebar.collapsed {
+    transform: translateX(-100%);
+  }
+
+  .sidebar.mobile-open {
+    transform: translateX(0);
+  }
+
+  .sidebar-collapsed-btns {
+    display: none !important;
+  }
+
+  .content {
+    margin-left: 0;
+    padding: 20px 16px;
+    padding-top: 72px;
+  }
+
+  /* iOS 对字号 <16px 的输入框聚焦时强制放大页面 */
+  #search-input {
+    font-size: 16px;
+  }
+
+  /* 触控目标加大到 >=44px */
+  .sidebar a {
+    padding: 10px 12px;
+  }
+
+  .sidebar .folder {
+    padding: 10px 12px 6px;
+  }
+
+  .sidebar-footer {
+    flex-direction: row-reverse;
+    padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+  }
+
+  /* 宽图不整张压缩：保持原尺寸，容器横向滚动 */
+  .mermaid-container svg {
+    max-width: none;
+  }
+
+  body.sidebar-open .sidebar-overlay {
+    display: block;
+    opacity: 1;
+  }
+}
+
+/* 触屏设备：无 hover，需要常显与 :active 反馈 */
+@media (hover: none) {
+  .copy-btn {
+    opacity: 1;
+  }
+
+  .sidebar a:active,
+  .sidebar .folder:active {
+    background: #f1f8ff;
+  }
+
+  .sidebar-btn:active {
+    background: #f1f8ff;
+    border-color: #0366d6;
+  }
+
+  body.dark .sidebar a:active,
+  body.dark .sidebar .folder:active,
+  body.dark .sidebar-btn:active {
+    background: #1f6feb33;
+  }
+}

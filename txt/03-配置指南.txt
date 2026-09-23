@@ -1,0 +1,139 @@
+# 配置指南
+
+## 配置文件位置
+
+所有配置位于 `reader/config.json` 文件中。
+
+## 核心配置项
+
+### source_dir
+
+文档源目录路径，相对于项目根目录。
+
+```json
+{
+  "source_dir": "txt"
+}
+```
+
+### site_title
+
+网站标题，显示在浏览器标签页。
+
+```json
+{
+  "site_title": "文档阅读器"
+}
+```
+
+### sidebar_title
+
+侧边栏标题。
+
+```json
+{
+  "sidebar_title": "文档目录"
+}
+```
+
+### theme
+
+默认主题，可选值：`light`（亮色）、`dark`（暗色）。
+
+```json
+{
+  "theme": "light"
+}
+```
+
+### max_content_width
+
+内容区域最大宽度，单位：像素。
+
+```json
+{
+  "max_content_width": 900
+}
+```
+
+### enable_search
+
+是否启用搜索功能。
+
+```json
+{
+  "enable_search": true
+}
+```
+
+### enable_back_to_top
+
+是否启用返回顶部按钮。
+
+```json
+{
+  "enable_back_to_top": true
+}
+```
+
+### home_page
+
+首页文档文件名（需存在于文档目录中）。
+
+```json
+{
+  "home_page": "01-项目简介.txt"
+}
+```
+
+### exclude_patterns
+
+排除的目录模式列表，支持通配符。
+
+```json
+{
+  "exclude_patterns": ["**/test/**", "**/temp/**"]
+}
+```
+
+### exclude_files
+
+排除的文件名列表。
+
+```json
+{
+  "exclude_files": ["README.md", ".gitignore"]
+}
+```
+
+## 完整配置示例
+
+```json
+{
+  "source_dir": "txt",
+  "site_title": "我的文档",
+  "sidebar_title": "文档目录",
+  "theme": "light",
+  "max_content_width": 900,
+  "enable_search": true,
+  "enable_back_to_top": true,
+  "exclude_patterns": [],
+  "exclude_files": [],
+  "home_page": "01-项目简介.txt"
+}
+```
+
+## 环境变量
+
+某些配置可以通过环境变量覆盖：
+
+| 环境变量 | 对应配置 | 说明 |
+|---------|---------|------|
+| SITE_TITLE | site_title | 网站标题 |
+| THEME | theme | 默认主题 |
+
+## 注意事项
+
+1. 修改配置后需重新运行 `python scripts/sync.py`
+2. 部分配置（如主题）需要清除浏览器缓存生效
+3. exclude_patterns 支持 glob 模式：`*` 匹配任意字符，`**/` 匹配任意目录

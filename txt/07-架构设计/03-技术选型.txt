@@ -1,0 +1,200 @@
+# 技术选型
+
+## 前端技术
+
+### HTML5
+
+**选择理由**：
+- 语义化标签，结构清晰
+- 原生支持，无需编译
+- 良好的兼容性
+
+**使用场景**：
+
+```html
+<aside class="sidebar">侧边栏</aside>
+<main class="content">主内容区</main>
+<article>文档内容</article>
+```
+
+### CSS3
+
+**选择理由**：
+- 原生变量支持
+- 灵活的布局系统
+- 动画效果
+
+**特性使用**：
+```css
+:root {
+    --primary-color: #0366d6;
+}
+
+.sidebar {
+    transition: transform 0.3s ease;
+}
+
+@media (max-width: 768px) {
+    /* 响应式设计 */
+}
+```
+
+### JavaScript ES6+
+
+**选择理由**：
+- 模块化支持
+- 箭头函数
+- Promise 异步处理
+
+**使用示例**：
+```javascript
+const loadConfig = async () => {
+    const res = await fetch('config.json');
+    return res.json();
+};
+```
+
+## 后端技术
+
+### Python 3.8+
+
+**选择理由**：
+- 简洁的语法
+- 丰富的标准库
+- 强大的文本处理能力
+
+**核心依赖**：
+| 包名 | 用途 |
+|------|------|
+| python-docx | DOCX 文件读取 |
+| fnmatch | 文件名模式匹配 |
+| json | 数据序列化 |
+
+## 第三方库
+
+### Mermaid
+
+**用途**：流程图、甘特图、关系图渲染
+
+**版本**：10.9.1
+
+**使用方式**：
+```mermaid
+graph TD
+    A[开始] --> B[处理]
+    B --> C[结束]
+```
+
+### CDN 资源
+
+| 资源 | 地址 | 用途 |
+|------|------|------|
+| Mermaid | s4.zstatic.net/npm/mermaid@10.9.1/dist/mermaid.min.js | 图表渲染 |
+
+## 部署技术
+
+### Vercel
+
+**选择理由**：
+- 免费额度充足
+- 自动构建部署
+- 全球 CDN 加速
+- Serverless 支持
+
+**配置**：
+```json
+{
+  "buildCommand": "python scripts/sync.py",
+  "outputDirectory": "reader"
+}
+```
+
+### GitHub Pages
+
+**选择理由**：
+- 完全免费
+- 与 GitHub 集成
+- 适合开源项目
+
+**工作流**：
+```yaml
+- uses: peaceiris/actions-gh-pages@v4
+```
+
+## 开发工具
+
+### Git
+
+**版本控制**：Git
+
+**分支策略**：main + feature branches
+
+**提交规范**：
+```
+feat: 新功能
+fix: Bug 修复
+docs: 文档更新
+style: 代码格式
+refactor: 重构
+```
+
+### IDE
+
+**推荐**：VS Code + Trae
+
+**插件**：
+- Python
+- ESLint
+- Prettier
+
+## 数据库
+
+**本项目不使用数据库**，所有数据以文件形式存储：
+
+| 数据类型 | 存储方式 |
+|---------|---------|
+| 文档内容 | txt/md/docx 文件 |
+| 配置信息 | config.json |
+| 文档索引 | index.json |
+| 用户偏好 | localStorage |
+
+## 性能优化
+
+### 静态资源
+
+| 优化项 | 实现方式 |
+|-------|---------|
+| CDN 加速 | Vercel 全球节点 |
+| 代码压缩 | Vercel 自动压缩 |
+| 缓存策略 | 静态资源长期缓存 |
+
+### 加载优化
+
+| 优化项 | 实现方式 |
+|-------|---------|
+| 按需加载 | 文档懒加载 |
+| 代码分割 | ES Modules |
+| 图片优化 | 建议使用 SVG |
+
+## 安全性
+
+### XSS 防护
+
+```python
+def escape_html(text):
+    return text.replace('&', '&amp;')\
+               .replace('<', '&lt;')\
+               .replace('>', '&gt;')
+```
+
+### CSP 配置
+
+```http
+Content-Security-Policy: default-src 'self'
+```
+
+### 依赖安全
+
+- 定期更新依赖
+- 使用固定版本
+- 扫描安全漏洞

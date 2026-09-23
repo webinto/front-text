@@ -1,0 +1,172 @@
+# 常见问题
+
+## 安装问题
+
+### Q1: pip install python-docx 失败？
+
+**A:** 尝试以下步骤：
+
+```bash
+# 升级 pip
+pip install --upgrade pip
+
+# 安装依赖
+pip install python-docx
+
+# 如果仍失败，尝试
+pip install python-docx --no-cache-dir
+```
+
+### Q2: Python 版本不兼容？
+
+**A:** 本项目需要 Python 3.8+。检查版本：
+
+```bash
+python --version
+```
+
+如果版本低于 3.8，请升级 Python。
+
+## 部署问题
+
+### Q3: Vercel 部署失败？
+
+**A:** 检查以下几点：
+
+1. 确保 `vercel.json` 配置文件存在
+2. 检查 `scripts/sync.py` 有执行权限
+3. 确认 `python-docx` 已安装
+4. 查看 Vercel 构建日志定位具体错误
+
+### Q4: GitHub Pages 不更新？
+
+**A:** 尝试以下解决方案：
+
+1. 确认 Actions 已执行完成
+2. 检查部署分支是否正确
+3. 清除浏览器缓存
+4. 强制刷新页面：Ctrl + F5
+
+### Q5: 文档没有更新？
+
+**A:** 执行以下步骤：
+
+```bash
+# 本地重新同步
+python scripts/sync.py
+
+# 提交并推送
+git add .
+git commit -m "Update docs"
+git push
+```
+
+## 使用问题
+
+### Q6: 侧边栏不显示？
+
+**A:** 可能原因：
+
+1. `index.json` 未正确生成
+2. 浏览器缓存问题
+3. `txt/` 目录为空
+
+### Q7: 搜索功能不工作？
+
+**A:** 检查配置：
+
+```json
+{
+  "enable_search": true
+}
+```
+
+确认值为 `true`。
+
+### Q8: 主题切换不生效？
+
+**A:** 主题偏好存储在 localStorage：
+
+1. 清除浏览器缓存
+2. 手动切换主题
+3. 刷新页面
+
+### Q9: 文档显示为空白？
+
+**A:** 可能原因：
+
+1. 文件编码不是 UTF-8
+2. 文件路径包含特殊字符
+3. 文档已被排除
+
+### Q10: 返回顶部按钮不显示？
+
+**A:** 检查配置：
+
+```json
+{
+  "enable_back_to_top": true
+}
+```
+
+同时确保已向下滚动超过 200px。
+
+## 性能问题
+
+### Q11: 页面加载慢？
+
+**A:** 优化建议：
+
+1. 减少文档数量
+2. 使用 Vercel 部署
+3. 开启 Gzip 压缩
+4. 优化图片大小
+
+### Q12: 搜索响应慢？
+
+**A:** 如果文档数量过多：
+
+1. 减少单文件内容
+2. 分割大文档
+3. 禁用搜索功能
+
+## 其他问题
+
+### Q13: 如何排除特定文件？
+
+**A:** 在 `reader/config.json` 中配置：
+
+```json
+{
+  "exclude_patterns": ["**/test/**", "**/temp/**"],
+  "exclude_files": ["draft.txt", "notes.txt"]
+}
+```
+
+### Q14: 如何设置首页？
+
+**A:** 在 `reader/config.json` 中设置：
+
+```json
+{
+  "home_page": "01-项目简介.txt"
+}
+```
+
+### Q15: 支持多级目录吗？
+
+**A:** 支持。目录结构会反映在侧边栏中：
+
+```
+txt/
+├── 01-根目录文档.txt
+└── 02-子目录/
+    └── 01-子文档.txt
+```
+
+### Q16: 如何联系支持？
+
+**A:** 通过以下方式：
+
+- GitHub Issues：https://github.com/yourusername/doc-reader/issues
+- 邮件：support@example.com

@@ -1,0 +1,9 @@
+{
+  "buildCommand": "python scripts/sync.py",
+  "outputDirectory": "reader",
+  "framework": "static",
+  "routes": [
+    { "handle": "filesystem" },
+    { "src": "/(.*)", "dest": "/index.html" }
+  ]
+}
