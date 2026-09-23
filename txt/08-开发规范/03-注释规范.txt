@@ -1,0 +1,302 @@
+# 注释规范
+
+## 注释原则
+
+1. **必要才注释**：注释应解释"为什么"，而非"是什么"
+2. **保持同步**：代码修改后，同步更新注释
+3. **简洁清晰**：避免冗长，表述准确
+4. **使用中文**：项目文档使用中文注释
+
+## Python 注释
+
+### 模块注释
+
+```python
+"""
+文档同步模块
+
+功能：
+- 扫描文档目录
+- 转换文档格式
+- 生成索引文件
+
+依赖：
+- python-docx: DOCX 文件处理
+- fnmatch: 文件名模式匹配
+"""
+```
+
+### 函数/方法注释
+
+```python
+def scan_directory(source_dir, root_dir=None):
+    """
+    扫描目录生成文档树
+    
+    Args:
+        source_dir: 源目录路径
+        root_dir: 根目录路径，默认为 source_dir
+        
+    Returns:
+        list: 文档树结构列表
+        
+    Example:
+        >>> items = scan_directory('txt/')
+        >>> len(items)
+        6
+    """
+    pass
+```
+
+### 类注释
+
+```python
+class DocumentConverter:
+    """
+    文档转换器
+    
+    将不同格式的文档转换为 HTML
+    
+    Attributes:
+        supported_formats: 支持的文件格式列表
+        
+    Example:
+        >>> converter = DocumentConverter()
+        >>> html = converter.convert('document.md')
+    """
+    
+    supported_formats = ['.txt', '.md', '.docx']
+```
+
+### 行内注释
+
+```python
+# 单行注释（空格后使用）
+
+def calculate_average(sizes):
+    # 计算平均字号，用于判断标题级别
+    avg_size = sum(sizes) / len(sizes) if sizes else 12
+    return avg_size
+
+# 注意：重要说明使用大写开头
+# TODO: 待实现功能
+# FIXME: 待修复问题
+```
+
+### 多行注释
+
+```python
+# 如果一段代码需要详细说明，
+# 可以使用多行注释
+# 每行以 # 开头
+```
+
+## JavaScript 注释
+
+### 文件注释
+
+```javascript
+/**
+ * 文档阅读器主应用
+ * 
+ * 功能：
+ * - 侧边栏渲染与管理
+ * - 文档加载与展示
+ * - 搜索功能
+ * - 主题切换
+ * 
+ * @version 1.0.0
+ * @author Developer
+ */
+```
+
+### 函数注释
+
+```javascript
+/**
+ * 加载配置文件
+ * 
+ * @returns {Promise<Object>} 配置对象
+ * @throws {Error} 配置文件不存在
+ * 
+ * @example
+ * loadConfig().then(config => {
+ *   console.log(config.site_title);
+ * });
+ */
+async function loadConfig() {
+  // ...
+}
+```
+
+### 行内注释
+
+```javascript
+// 单行注释
+
+function toggleTheme() {
+  document.body.classList.toggle('dark');
+  // 将主题偏好保存到本地存储
+  const isDark = document.body.classList.contains('dark');
+  localStorage.setItem('theme', isDark ? 'dark' : 'light');
+}
+
+// 重要说明
+// TODO: 优化搜索算法
+// FIXME: 修复暗色模式下的问题
+```
+
+### 多行注释
+
+```javascript
+/*
+ * 这是一个
+ * 多行注释块
+ */
+```
+
+## CSS 注释
+
+### 块注释
+
+```css
+/* =========================================
+   侧边栏样式
+   ========================================= */
+
+.sidebar {
+  width: 280px;
+  background: #f6f8fa;
+}
+```
+
+### 区域注释
+
+```css
+/* --- 侧边栏头部 --- */
+
+.sidebar-header {
+  padding: 16px;
+  border-bottom: 1px solid #e1e4e8;
+}
+
+/* --- 侧边栏列表 --- */
+
+.sidebar-list {
+  list-style: none;
+}
+```
+
+### 行内注释
+
+```css
+.sidebar {
+  width: 280px;       /* 固定宽度 */
+  height: 100vh;      /* 占满视口高度 */
+  position: fixed;    /* 固定定位 */
+}
+```
+
+## 文档注释标签
+
+### Python (Sphinx 风格)
+
+| 标签 | 用途 |
+|------|------|
+| `param` / `Args` | 函数参数 |
+| `returns` / `Returns` | 返回值 |
+| `raises` | 异常 |
+| `example` / `Examples` | 示例 |
+| `note` | 注意事项 |
+| `warning` | 警告信息 |
+| `see also` | 参考链接 |
+
+### JavaScript (JSDoc 风格)
+
+| 标签 | 用途 |
+|------|------|
+| `@param` | 函数参数 |
+| `@returns` | 返回值 |
+| `@throws` | 异常 |
+| `@example` | 示例 |
+| `@version` | 版本 |
+| `@author` | 作者 |
+| `@deprecated` | 已废弃 |
+
+## 注释示例对比
+
+### 差注释
+
+```python
+# 增加 i
+i += 1
+
+# 这是一个循环
+for item in items:
+    # 处理每个项目
+    process(item)
+```
+
+### 好注释
+
+```python
+# 索引递增，处理下一个文件
+i += 1
+
+# 遍历所有文档项目并渲染
+for item in items:
+    # 调用渲染函数生成侧边栏项
+    process(item)
+```
+
+## 特殊注释
+
+### TODO
+
+```python
+# TODO: 支持更多文档格式
+# TODO: 优化搜索性能
+```
+
+### FIXME
+
+```python
+# FIXME: 暗色模式下代码块样式异常
+# FIXME: 长文件名截断问题
+```
+
+### HACK
+
+```python
+# HACK: 临时解决方案，需要重构
+temp_workaround = True
+```
+
+### REVIEW
+
+```python
+# REVIEW: @张三 请审查此逻辑
+# REVIEW: 是否需要添加单元测试？
+```
+
+## 注释工具
+
+### Python
+
+```bash
+# 生成文档
+pydoc -w scripts.sync
+
+# 检查注释完整性
+pylint --disable=all --enable=missing-docstring scripts/
+```
+
+### JavaScript
+
+```bash
+# 生成文档
+jsdoc reader/app.js -d docs/
+
+# 检查注释
+eslint --no-eslintrc --rule 'require-jsdoc: error' reader/app.js
+```

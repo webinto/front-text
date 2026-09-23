@@ -1,0 +1,77 @@
+name: Sync TXT Files (API Download)
+
+on:
+  push:
+    branches: [main, master]
+    paths:
+      # 触发源：只有内容或前端资源变化才需要重建
+      - '**/*.txt'
+      - '**/*.md'
+      - '**/*.docx'
+      - 'reader/config.json'
+      - 'reader/index.html'
+      - 'reader/css/**'
+      - 'reader/app.js'
+      - 'scripts/**'
+      - '.github/workflows/sync-api.yml'
+  workflow_dispatch:
+
+permissions:
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  sync-and-deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Checkout Repository (Shallow - Scripts Only)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+          persist-credentials: false
+          sparse-checkout: |
+            scripts
+            reader/css
+            reader/app.js
+            reader/index.html
+            reader/config.json
+          sparse-checkout-cone-mode: false
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Dependencies
+        run: pip install -q mammoth
+
+      - name: Download TXT Files via API
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "[Deploy] 使用 GitHub API 下载 txt/md/docx 文件..."
+          python scripts/download-files.py
+
+      - name: Run Sync Script
+        run: |
+          echo "[Deploy] 扫描并同步文档..."
+          python scripts/sync.py
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload Pages Artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: reader
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

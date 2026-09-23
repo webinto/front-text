@@ -1,0 +1,134 @@
+# 目录结构
+
+## 项目根目录
+
+```
+doc-reader/
+├── scripts/              # 同步脚本目录
+│   ├── sync.py           # 主同步脚本
+│   └── config.py         # 配置文件（已合并到 sync.py）
+├── txt/                  # 文档源目录
+│   ├── 01-项目简介.txt
+│   ├── 02-安装部署.txt
+│   ├── 03-配置指南.txt
+│   ├── 04-使用说明.txt
+│   ├── 05-目录结构.txt
+│   ├── 06-常见问题.txt
+│   ├── 07-架构设计/
+│   ├── 08-开发规范/
+│   └── 09-运维手册/
+├── reader/               # 前端资源目录
+│   ├── index.html        # 主页面
+│   ├── app.js            # 前端逻辑
+│   ├── index.json        # 文档索引（自动生成）
+│   ├── config.json       # 配置文件
+│   ├── docs/             # 生成的目标文件目录
+│   │   ├── *.txt         # 复制的 txt 文件
+│   │   └── *.html        # 转换的 html 文件
+│   └── css/
+│       └── style.css     # 样式文件
+├── .github/
+│   └── workflows/        # GitHub Actions
+│       └── deploy.yml    # 部署工作流
+├── vercel.json           # Vercel 配置文件
+├── .gitignore            # Git 忽略配置
+├── README.md             # 项目说明
+└── requirements.txt      # Python 依赖
+```
+
+## scripts/ 目录
+
+```
+scripts/
+├── sync.py              # 主同步脚本
+│   ├── scan_directory()     # 扫描目录生成索引
+│   ├── convert_markdown()   # Markdown 转换
+│   ├── convert_docx()       # DOCX 转换
+│   ├── copy_and_convert_files()  # 复制转换文件
+│   └── cleanup_orphaned_files()   # 清理孤立文件
+```
+
+## reader/ 目录
+
+```
+reader/
+├── index.html           # 主页面结构
+│   ├── <aside class="sidebar">     # 侧边栏
+│   ├── <main class="content">      # 主内容区
+│   └── <button id="back-to-top">   # 返回顶部
+├── app.js               # 前端逻辑
+│   ├── loadConfig()         # 加载配置
+│   ├── loadSidebar()        # 加载侧边栏
+│   ├── renderSidebarItem()  # 渲染侧边栏项
+│   ├── loadDoc()            # 加载文档
+│   ├── handleSearch()       # 搜索文档
+│   ├── toggleTheme()        # 切换主题
+│   └── initTheme()          # 初始化主题
+├── index.json           # 文档索引（自动生成）
+│   [{                              # 顶层就是源目录下的条目，按名称排序
+│     "type": "file",               # 文件节点
+│     "name": "01-项目简介.txt",
+│     "path": "01-项目简介.txt",
+│     "title": "01 项目简介"
+│   }, {
+│     "type": "folder",             # 目录节点
+│     "name": "07-架构设计",
+│     "children": [...]
+│   }, ...]
+│   注：目录与文件同级混排，不再目录优先
+├── config.json          # 网站配置
+└── css/
+    └── style.css        # 样式文件
+        ├── .sidebar         # 侧边栏样式
+        ├── .content         # 内容区样式
+        ├── #search-input    # 搜索框样式
+        ├── #back-to-top     # 返回顶部按钮
+        ├── body.dark        # 暗色模式
+        └── @media           # 响应式设计
+```
+
+## txt/ 文档目录
+
+```
+txt/
+├── 01-项目简介.txt           # 项目概述和特性
+├── 02-安装部署.txt           # 安装和部署指南
+├── 03-配置指南.txt           # 配置文件说明
+├── 04-使用说明.txt           # 使用方法和快捷键
+├── 05-目录结构.txt           # 项目结构说明
+├── 06-常见问题.txt           # FAQ
+├── 07-架构设计/              # 架构相关文档
+│   ├── 01-整体架构.txt
+│   ├── 02-模块划分.txt
+│   └── 03-技术选型.txt
+├── 08-开发规范/              # 开发规范文档
+│   ├── 01-代码规范.txt
+│   ├── 02-命名规范.txt
+│   └── 03-注释规范.txt
+└── 09-运维手册/              # 运维相关文档
+    ├── 01-部署流程.txt
+    ├── 02-监控告警.txt
+    └── 03-故障排查.txt
+```
+
+## .github/workflows/ 目录
+
+```
+.github/
+└── workflows/
+    └── deploy.yml        # GitHub Actions 部署脚本
+        ├── Checkout         # 检出代码
+        ├── Setup Python     # 设置 Python 环境
+        ├── Sync Documents   # 同步文档
+        └── Deploy          # 部署到目标平台
+```
+
+## 特殊文件说明
+
+| 文件 | 说明 |
+|------|------|
+| `sync.py` | 核心脚本，扫描文档并生成 HTML |
+| `index.json` | 自动生成，记录所有文档路径 |
+| `docs/` | 自动生成，存放最终的 HTML/TXT 文件 |
+| `vercel.json` | Vercel 部署配置 |
+| `deploy.yml` | CI/CD 自动部署配置 |

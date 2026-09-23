@@ -1,0 +1,108 @@
+# 整体架构
+
+## 架构概述
+
+本项目采用前后端分离架构，前端为纯静态页面，后端通过 Python 脚本进行文档同步和转换。
+
+## 系统架构图
+
+```mermaid
+graph TB
+    subgraph 用户端
+        Browser[浏览器]
+    end
+    
+    subgraph 静态资源
+        HTML[HTML 页面]
+        CSS[样式文件]
+        JS[JavaScript]
+        Mermaid[Mermaid 图表]
+    end
+    
+    subgraph 文档源
+        TXT[TXT 文件]
+        MD[Markdown 文件]
+        DOCX[Word 文档]
+    end
+    
+    subgraph 同步层
+        Python[Python 脚本]
+        Converter[文档转换器]
+        Indexer[索引生成器]
+    end
+    
+    subgraph 部署平台
+        Vercel[Vercel]
+        GitHub[GitHub Pages]
+    end
+    
+    TXT --> Python
+    MD --> Python
+    DOCX --> Python
+    
+    Python --> Converter
+    Python --> Indexer
+    
+    Converter --> HTML
+    Indexer --> JSON
+    
+    HTML --> Vercel
+    CSS --> Vercel
+    JS --> Vercel
+    Mermaid --> Vercel
+    JSON --> Vercel
+    
+    Vercel --> Browser
+```
+
+## 技术架构
+
+### 前端技术栈
+
+| 技术 | 用途 |
+|------|------|
+| HTML5 | 页面结构 |
+| CSS3 | 样式设计 |
+| JavaScript (ES6+) | 交互逻辑 |
+| Mermaid | 图表渲染 |
+| localStorage | 数据持久化 |
+
+### 后端技术栈
+
+| 技术 | 用途 |
+|------|------|
+| Python 3.8+ | 脚本语言 |
+| python-docx | DOCX 转换 |
+| fnmatch | 模式匹配 |
+| json | 数据序列化 |
+
+### 部署架构
+
+| 平台 | 特点 |
+|------|------|
+| Vercel | 自动构建，无服务器 |
+| GitHub Pages | 免费托管，CDN 加速 |
+
+## 数据流程
+
+```
+1. 文档源文件 (txt/md/docx)
+         ↓
+2. Python 脚本扫描
+         ↓
+3. 文档转换 (MD/DOCX → HTML)
+         ↓
+4. 索引生成 (index.json)
+         ↓
+5. 部署到平台
+         ↓
+6. 用户访问
+```
+
+## 模块划分
+
+1. **扫描模块**：遍历目录，收集文档列表
+2. **转换模块**：将不同格式转换为 HTML
+3. **索引模块**：生成文档索引 JSON
+4. **部署模块**：上传到部署平台
+5. **前端模块**：展示和交互

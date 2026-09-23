@@ -1,0 +1,181 @@
+# 模块划分
+
+## 模块结构
+
+```
+doc-reader/
+├── scripts/              # 同步脚本模块
+│   ├── sync.py           # 主入口
+│   ├── converter.py      # 文档转换（已集成）
+│   └── scanner.py        # 目录扫描（已集成）
+├── txt/                  # 文档模块
+│   ├── 基础文档/          # 基础功能文档
+│   ├── 架构设计/          # 架构相关文档
+│   ├── 开发规范/          # 开发规范文档
+│   └── 运维手册/          # 运维相关文档
+└── reader/               # 前端模块
+    ├── index.html        # 页面骨架
+    ├── app.js            # 业务逻辑
+    ├── config.json       # 配置文件
+    ├── css/
+    │   └── style.css     # 样式表
+    └── docs/             # 生成文件
+```
+
+## 核心模块
+
+### 1. 文档扫描模块
+
+**功能**：遍历文档目录，收集文件信息
+
+**职责**：
+- 扫描 txt/ 目录
+- 识别文件类型
+- 生成目录树结构
+- 排除指定文件/目录
+
+**关键函数**：
+```python
+def scan_directory(source_dir, root_dir=None):
+    """扫描目录生成树形结构"""
+    ...
+
+def should_skip(path):
+    """跳过系统目录"""
+    ...
+
+def should_exclude(file_path, source_dir):
+    """排除指定文件"""
+    ...
+```
+
+### 2. 文档转换模块
+
+**功能**：将不同格式转换为 HTML
+
+**职责**：
+- TXT/Markdown 转换
+- DOCX 转换
+- Mermaid 图表处理
+- 代码高亮
+
+**关键函数**：
+```python
+def convert_markdown(text):
+    """Markdown 转 HTML"""
+    ...
+
+def convert_docx(docx_path):
+    """DOCX 转 HTML"""
+    ...
+
+def render_content(content, file_path):
+    """统一转换入口"""
+    ...
+```
+
+### 3. 索引生成模块
+
+**功能**：生成文档索引
+
+**职责**：
+- 收集扫描结果
+- 生成 JSON 格式索引
+- 写入 index.json
+
+**关键函数**：
+```python
+def generate_index(items, output_file):
+    """生成索引文件"""
+    ...
+```
+
+### 4. 前端展示模块
+
+**功能**：文档展示和交互
+
+**职责**：
+- 侧边栏渲染
+- 文档加载
+- 搜索功能
+- 主题切换
+
+**关键类/函数**：
+```javascript
+function loadSidebar()      // 加载侧边栏
+function renderSidebarItem() // 渲染侧边栏项
+function loadDoc(path)      // 加载文档
+function searchDocs(query)  // 搜索文档
+function toggleTheme()      // 切换主题
+```
+
+### 5. 配置管理模块
+
+**功能**：管理应用配置
+
+**职责**：
+- 读取 config.json
+- 提供配置获取接口
+- 覆盖默认配置
+
+**关键函数**：
+```python
+def load_config():
+    """加载配置"""
+    ...
+
+def get_source_dir():
+    """获取源目录"""
+    ...
+```
+
+## 模块依赖
+
+```
+    配置管理模块
+          ↓
+    文档扫描模块 ──→ 索引生成模块
+          ↓
+    文档转换模块
+          ↓
+    前端展示模块
+```
+
+## 扩展性设计
+
+### 插件机制
+
+```python
+# 支持自定义处理器
+class DocumentProcessor:
+    def process(self, content, file_path):
+        return content
+
+# 注册处理器
+processor = DocumentProcessor()
+```
+
+### 主题系统
+
+```css
+:root {
+    --primary-color: #0366d6;
+    --bg-color: #ffffff;
+    --text-color: #24292e;
+}
+
+body.dark {
+    --bg-color: #0d1117;
+    --text-color: #c9d1d9;
+}
+```
+
+### 配置项扩展
+
+```json
+{
+    "plugins": [],
+    "themes": ["light", "dark"],
+    "custom_css": ""
+}
+```

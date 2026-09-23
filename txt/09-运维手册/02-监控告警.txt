@@ -1,0 +1,265 @@
+# 监控告警
+
+## 监控指标
+
+### 可用性监控
+
+| 指标 | 阈值 | 说明 |
+|------|------|------|
+| HTTP 状态码 | 200 | 页面正常响应 |
+| 响应时间 | < 2s | 用户体验 |
+| 可用性 | > 99.9% | 月可用率 |
+
+### 性能监控
+
+| 指标 | 阈值 | 说明 |
+|------|------|------|
+| 首屏加载 | < 3s | 首次渲染时间 |
+| 文档加载 | < 1s | 切换文档时间 |
+| 搜索响应 | < 500ms | 搜索结果返回 |
+
+### 错误监控
+
+| 指标 | 阈值 | 说明 |
+|------|------|------|
+| JS 错误 | 0 | 脚本错误 |
+| 资源加载失败 | 0 | 静态资源加载 |
+| API 请求失败 | 0 | 配置文件加载 |
+
+## 监控工具
+
+### Vercel Analytics
+
+```json
+// vercel.json 添加
+{
+  "regions": ["iad1"],
+  "analytics": true
+}
+```
+
+### GitHub Actions 监控
+
+```yaml
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check deployment
+        run: |
+          echo "Deployment completed at $(date)"
+```
+
+### Uptime Robot
+
+注册 https://uptimerobot.com，添加监控：
+
+```
+监控类型: HTTP(s)
+URL: https://your-project.vercel.app
+检查间隔: 5 分钟
+```
+
+## 告警配置
+
+### 告警级别
+
+| 级别 | 响应时间 | 说明 |
+|------|---------|------|
+| P0 紧急 | 立即 | 服务不可用 |
+| P1 高 | 1 小时内 | 核心功能异常 |
+| P2 中 | 4 小时内 | 次要功能异常 |
+| P3 低 | 24 小时内 | 性能问题 |
+
+### 告警方式
+
+**邮件告警**：
+
+```yaml
+# GitHub Actions 失败通知
+on:
+  workflow_run:
+    workflows: ["Deploy"]
+    types: [completed]
+
+jobs:
+  notify:
+    if: ${{ github.event.workflow_run.conclusion == 'failure' }}
+    steps:
+      - name: Send email
+        run: |
+          echo "Deployment failed" | mail -s "Alert" admin@example.com
+```
+
+**Slack 告警**：
+
+```yaml
+- name: Notify Slack
+  if: failure()
+  uses: 8398a7/action-slack@v3
+  with:
+    status: failure
+    channel: '#deployments'
+    text: '部署失败！'
+```
+
+## 日志管理
+
+### GitHub Actions 日志
+
+```yaml
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Print log
+        run: |
+          echo "::notice title=Deployment::开始部署"
+          echo "::warning title=Deprecated::使用旧版 API"
+          echo "::error title=Failed::部署失败"
+```
+
+### Vercel 函数日志
+
+```javascript
+// app.js
+console.log('[App] 加载配置:', config);
+console.log('[App] 加载文档:', path);
+console.error('[App] 错误:', error);
+```
+
+## 性能监控
+
+### Lighthouse 监控
+
+使用 GitHub Actions 定期检测：
+
+```yaml
+name: Lighthouse CI
+
+on:
+  schedule:
+    - cron: '0 0 * * *'  # 每天
+
+jobs:
+  lighthouse:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Lighthouse CI
+        run: |
+          npm install -g @lhci/cli
+          lci autorun
+```
+
+### Web Vitals
+
+```javascript
+// 记录 Web Vitals
+if ('PerformanceObserver' in window) {
+  new PerformanceObserver((list) => {
+    for (const entry of list.getEntries()) {
+      console.log('[Web Vitals]', entry.name, entry.value);
+    }
+  }).observe({ type: 'largest-contentful-paint', buffered: true });
+}
+```
+
+## 健康检查
+
+### 端点检查
+
+```javascript
+// 在 app.js 中添加健康检查
+const healthCheck = () => {
+  const checks = [
+    { name: 'Config', status: !!config },
+    { name: 'Sidebar', status: sidebarList.children.length > 0 },
+    { name: 'Theme', status: !!localStorage.getItem('theme') }
+  ];
+  
+  const allHealthy = checks.every(c => c.status);
+  console.log('[Health]', allHealthy ? 'OK' : 'FAILED', checks);
+};
+```
+
+### 自动化检查
+
+```bash
+# 检查索引文件
+curl -s https://your-project.vercel.app/index.json | jq 'length'
+
+# 检查文档数量
+curl -s https://your-project.vercel.app/docs/01-项目简介.txt | head -c 100
+```
+
+## 报表生成
+
+### 每日报告
+
+```yaml
+name: Daily Report
+
+on:
+  schedule:
+    - cron: '0 9 * * *'  # 每天 9 点
+
+jobs:
+  report:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Generate report
+        run: |
+          echo "# 每日监控报告" > report.md
+          echo "日期: $(date)" >> report.md
+          echo "状态: 正常" >> report.md
+```
+
+## 监控大盘
+
+### 推荐工具
+
+| 工具 | 用途 | 价格 |
+|------|------|------|
+| Vercel Analytics | 访问统计 | 免费 Analytics | 用户 |
+| Google行为 | 免费 |
+| Grafana | 指标可视化 | 开源 |
+| Datadog | 全栈监控 | 付费 |
+
+### 自定义监控
+
+```javascript
+// 上报监控数据
+function reportMetrics(metrics) {
+  const endpoint = 'https://metrics.example.com/collect';
+  fetch(endpoint, {
+    method: 'POST',
+    body: JSON.stringify({
+      ...metrics,
+      timestamp: Date.now(),
+      url: window.location.href
+    })
+  });
+}
+```
+
+## 告警阈值配置
+
+```json
+{
+  "alerts": {
+    "availability": {
+      "threshold": 99.9,
+      "period": "daily"
+    },
+    "response_time": {
+      "threshold": 2000,
+      "period": "realtime"
+    },
+    "error_rate": {
+      "threshold": 0.01,
+      "period": "hourly"
+    }
+  }
+}
+```

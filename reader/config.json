@@ -1,0 +1,12 @@
+{
+  "source_dir": "txt",
+  "site_title": "文档前端展示引擎",
+  "sidebar_title": "文档目录",
+  "theme": "light",
+  "max_content_width": 900,
+  "enable_search": true,
+  "enable_back_to_top": true,
+  "exclude_patterns": [],
+  "exclude_files": [],
+  "home_page": null
+}
